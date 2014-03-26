@@ -1,4 +1,4 @@
-# AsmGrm
+# AsmGrm [![Build Status](https://travis-ci.org/robhardwick/asmgrm.png?branch=master)](https://travis-ci.org/robhardwick/asmgrm)
 
 AsmGrm is an anagram generator written in x86-64 assembly and integrated with [FastCGI][1]. The only supported platform is linux x86-64.
 
