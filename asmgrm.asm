@@ -62,7 +62,7 @@ _start:
     test rax, rax
     je .error
 
-; Remove trailing slash
+; Remove leading slash
     mov r14, rax
     inc r14
 
