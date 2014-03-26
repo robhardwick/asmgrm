@@ -24,6 +24,6 @@ SCRIPT
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "precise64"
     config.vm.box_url = "http://files.vagrantup.com/precise64.box"
-    config.vm.network 'private_network', ip: '10.255.255.122'
+    config.vm.network "forwarded_port", guest: 80, host: 8888
     config.vm.provision 'shell', inline: $script, privileged: false
 end
