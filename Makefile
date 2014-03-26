@@ -16,7 +16,7 @@ LIBS=-lfcgi -lrt
 all: $(PROG)
 
 run: $(PROG)
-	sudo -u$(USER) killall attoblog; \
+	sudo -u$(USER) killall $(PROG); \
 	sudo service nginx stop; \
 	sudo rm $(SOCK); \
 	sudo -u$(USER) spawn-fcgi -s $(SOCK) -u $(USER) $(PROG) && \
