@@ -8,7 +8,7 @@ A [Vagrantfile][2] is provided for easy setup:
 
     vagrant up
 
-This should spin up a VM, install dependencies, build AsmGrm and start [Nginx][3]. By default the VM is started with a static IP of [10.255.255.122][http://10.255.255.122/].
+This should spin up a VM, install dependencies, build AsmGrm and start [Nginx][3]. By default the VM is started with a static IP of 10.255.255.122.
 
 When restarting the VM you'll need to start-up AsmGrm manually:
 
