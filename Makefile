@@ -9,7 +9,7 @@ ASM=nasm
 ASMFLAGS=-f elf64
 
 LD=ld
-LINKER=$(shell locate ld-linux-x86-64.so | head -n 1)
+LINKER=/lib64/ld-linux-x86-64.so.2
 LDFLAGS=-s -m elf_x86_64 -dynamic-linker $(LINKER)
 LIBS=-lfcgi -lrt
 
