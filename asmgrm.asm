@@ -79,6 +79,7 @@ _start:
 ; Truncate string
     mov byte[r14+MAX_LENGTH], 0
     mov ebx, MAX_LENGTH
+    jmp .response
 
 ; Check length > 1
 .minlen:
