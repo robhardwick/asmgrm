@@ -56,25 +56,25 @@ _start:
     js .quit
 
 ; Get request URI
-	mov rsi, qword[rsp+fcgx_envp]
-	mov edi, request_uri
-	call FCGX_GetParam
-	test rax, rax
-	je .error
+    mov rsi, qword[rsp+fcgx_envp]
+    mov edi, request_uri
+    call FCGX_GetParam
+    test rax, rax
+    je .error
 
 ; Remove trailing slash
-	mov r14, rax
+    mov r14, rax
     inc r14
 
 ; Get length
-	mov rdi, r14
-	call strlen
+    mov rdi, r14
+    call strlen
     mov ebx, eax
 
 ; Check length < MAX_LENGTH
 .maxlen:
-	cmp rbx, MAX_LENGTH
-	jbe .minlen
+    cmp rbx, MAX_LENGTH
+    jbe .minlen
 
 ; Truncate string
     mov byte[r14+MAX_LENGTH], 0
@@ -82,71 +82,71 @@ _start:
 
 ; Check length > 1
 .minlen:
-	test rbx, rbx
-	je .home
+    test rbx, rbx
+    je .home
 
 ; Print permutations header
 .response:
-	mov rsi, qword[rsp+fcgx_out]
-	mov edi, response_head
-	call FCGX_PutS
+    mov rsi, qword[rsp+fcgx_out]
+    mov edi, response_head
+    call FCGX_PutS
 
 ; Get start time
-	lea rsi, [rsp+tmspec_start]
-	mov edi, CLOCK_PROCESS_CPUTIME_ID
-	call clock_gettime
+    lea rsi, [rsp+tmspec_start]
+    mov edi, CLOCK_PROCESS_CPUTIME_ID
+    call clock_gettime
 
 ; Print permutations
-	mov rdi, qword[rsp+fcgx_out]
-	mov ecx, ebx
-	xor edx, edx
-	mov rsi, r14
-	call permutations
+    mov rdi, qword[rsp+fcgx_out]
+    mov ecx, ebx
+    xor edx, edx
+    mov rsi, r14
+    call permutations
 
 ; Get end time
-	lea rsi, [rsp+tmspec_end]
-	mov	edi, CLOCK_PROCESS_CPUTIME_ID
-	call clock_gettime
+    lea rsi, [rsp+tmspec_end]
+    mov	edi, CLOCK_PROCESS_CPUTIME_ID
+    call clock_gettime
 
 ; Calculate elapsed time
-	mov rdx, qword[rsp+tmspec_end+tmspec_nsec]
-	sub rdx, qword[rsp+tmspec_start+tmspec_nsec]
+    mov rdx, qword[rsp+tmspec_end+tmspec_nsec]
+    sub rdx, qword[rsp+tmspec_start+tmspec_nsec]
 
 ; Print elapsed time
-	mov esi, time_fmt
-	mov rdi, qword[rsp+fcgx_out]
-	xor	eax, eax
-	call FCGX_FPrintF
+    mov esi, time_fmt
+    mov rdi, qword[rsp+fcgx_out]
+    xor	eax, eax
+    call FCGX_FPrintF
 
 ; Print permutations footer
-	mov rsi, qword[rsp+fcgx_out]
-	mov edi, response_foot
-	call FCGX_PutS
-	jmp .accept
+    mov rsi, qword[rsp+fcgx_out]
+    mov edi, response_foot
+    call FCGX_PutS
+    jmp .accept
 
 ; Print home page header
 .home:
-	mov rsi, qword[rsp+fcgx_out]
-	mov edi, response_head
-	call FCGX_PutS
+    mov rsi, qword[rsp+fcgx_out]
+    mov edi, response_head
+    call FCGX_PutS
 
 ; Print home page
-	mov rsi, qword[rsp+fcgx_out]
-	mov edi, response_home
-	call FCGX_PutS
+    mov rsi, qword[rsp+fcgx_out]
+    mov edi, response_home
+    call FCGX_PutS
 
 ; Print home page footer
-	mov rsi, qword[rsp+fcgx_out]
-	mov edi, response_foot
-	call FCGX_PutS
-	jmp .accept
+    mov rsi, qword[rsp+fcgx_out]
+    mov edi, response_foot
+    call FCGX_PutS
+    jmp .accept
 
 ; Print error page
 .error:
-	mov rsi, qword[rsp+fcgx_out]
-	mov edi, response_error
-	call FCGX_PutS
-	jmp .accept
+    mov rsi, qword[rsp+fcgx_out]
+    mov edi, response_error
+    call FCGX_PutS
+    jmp .accept
 
 .quit:
     xor eax, eax
@@ -155,93 +155,93 @@ _start:
 
 ; Print all permutations
 permutations:
-	push r15
-	push r14
-	push r13
-	push r12
-	push rbp
-	push rbx
-	sub rsp, stack_perm
+    push r15
+    push r14
+    push r13
+    push r12
+    push rbp
+    push rbx
+    sub rsp, stack_perm
 
 ; Initialise
-	mov r14, rsi
-	mov r13d, ecx
-	mov r12d, edx
-	cmp edx, ecx
-	mov qword[rsp+fcgx_out], rdi
-	je .print
+    mov r14, rsi
+    mov r13d, ecx
+    mov r12d, edx
+    cmp edx, ecx
+    mov qword[rsp+fcgx_out], rdi
+    je .print
 
 ; Print all permutations for first char
-	lea r15d, [r12+1]
-	mov rdi, qword[rsp+fcgx_out]
-	mov edx, r15d
-	call permutations
-	cmp r13d, r15d
-	jle .exit
+    lea r15d, [r12+1]
+    mov rdi, qword[rsp+fcgx_out]
+    mov edx, r15d
+    call permutations
+    cmp r13d, r15d
+    jle .exit
 
 ; Print subsequent permutations
-	mov edx, r13d
-	movsx rax, r15d
-	movsx rbp, r12d
-	sub edx, r12d
-	lea rbx, [r14+rax]
-	lea rax, [r14+1+rax]
-	mov r12d, edx
-	add rbp, r14
-	sub r12d, 2
-	add r12, rax
+    mov edx, r13d
+    movsx rax, r15d
+    movsx rbp, r12d
+    sub edx, r12d
+    lea rbx, [r14+rax]
+    lea rax, [r14+1+rax]
+    mov r12d, edx
+    add rbp, r14
+    sub r12d, 2
+    add r12, rax
 
 ; Swap byte
 .loop:
-	movzx eax, byte[rbp]
-	movzx edx, byte[rbx]
-	cmp al, dl
-	je .next
+    movzx eax, byte[rbp]
+    movzx edx, byte[rbx]
+    cmp al, dl
+    je .next
 
 ; Recurse
-	mov rdi, qword[rsp+fcgx_out]
-	mov byte[rbp], dl
-	mov ecx, r13d
-	mov byte[rbx], al
-	mov edx, r15d
-	mov rsi, r14
-	call permutations
+    mov rdi, qword[rsp+fcgx_out]
+    mov byte[rbp], dl
+    mov ecx, r13d
+    mov byte[rbx], al
+    mov edx, r15d
+    mov rsi, r14
+    call permutations
 
 ; Swap byte
-	movzx eax, byte[rbp]
-	movzx edx, byte[rbx]
-	mov byte[rbp], dl
-	mov byte[rbx], al
+    movzx eax, byte[rbp]
+    movzx edx, byte[rbx]
+    mov byte[rbp], dl
+    mov byte[rbx], al
 
 .next:
-	add rbx, 1
-	cmp rbx, r12
-	jne .loop
+    add rbx, 1
+    cmp rbx, r12
+    jne .loop
 
 ; Clean-up and return
 .exit:
-	add rsp, stack_perm
-	pop rbx
-	pop rbp
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	ret
+    add rsp, stack_perm
+    pop rbx
+    pop rbp
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+    ret
 
 ; Print permutation and return
 .print:
-	add rsp, stack_perm
-	mov rdx, rsi
-	xor eax, eax
-	pop rbx
-	pop rbp
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	mov esi, perm_fmt
-	jmp FCGX_FPrintF
+    add rsp, stack_perm
+    mov rdx, rsi
+    xor eax, eax
+    pop rbx
+    pop rbp
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+    mov esi, perm_fmt
+    jmp FCGX_FPrintF
 
 
 ;
