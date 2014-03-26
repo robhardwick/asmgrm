@@ -8,7 +8,7 @@ A [Vagrantfile][2] is provided for easy setup:
 
     vagrant up
 
-This should spin up a VM, install dependencies, build AsmGrm and start [Nginx][3]. The VM forwards Nginx to port 8888 on the host, so AsmGrm can be accessed at [http://localhost:8888][http://localhost:8888].
+This should spin up a VM, install dependencies, build AsmGrm and start [Nginx][3]. The VM forwards Nginx to port 8888 on the host, so AsmGrm can be accessed at [http://localhost:8888](http://localhost:8888).
 
 When restarting the VM you'll need to start-up AsmGrm manually:
 
