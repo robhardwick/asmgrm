@@ -13,7 +13,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -o Dpkg::Options::="--force-conf
 sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install $PACKAGES
 
 # Set nginx config
-sudo cp conf/nginx.conf /etc/nginx/sites-available/default
+sudo cp /vagrant/conf/nginx.conf /etc/nginx/sites-available/default
 
 # Build and run
 cd /vagrant
