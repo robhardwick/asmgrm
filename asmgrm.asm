@@ -27,7 +27,8 @@ extern FCGX_PutS
 %define tmspec_end      48  ; struct timespec
 
 ; Stack sizes
-%define stack_start     64
+%define stack_start     32
+%define stack_response  64
 %define stack_perm      24
 
 ; Struct offsets
@@ -35,25 +36,53 @@ extern FCGX_PutS
 
 
 ;
-; Code
+; Application start
 ;
 
 section .text
     global _start
 
-; Application start
 _start:
     sub rsp, stack_start
 
 ; Start accept loop
 .accept:
-    lea rdi, [rsp+fcgx_in]
-    lea rsi, [rsp+fcgx_out]
-    lea rdx, [rsp+fcgx_err]
     lea rcx, [rsp+fcgx_envp]
+    lea rdx, [rsp+fcgx_err]
+    lea rsi, [rsp+fcgx_out]
+    lea rdi, [rsp+fcgx_in]
     call FCGX_Accept
     test eax, eax
     js .quit
+
+; Ouput response
+.response:
+    mov rcx, qword[rsp+fcgx_envp]
+    mov rdx, qword[rsp+fcgx_err]
+    mov rsi, qword[rsp+fcgx_out]
+    mov rdi, qword[rsp+fcgx_in]
+    call response
+    jmp .accept
+
+; Exit app
+.quit:
+    xor eax, eax
+    add rsp, stack_start
+    ret
+
+
+;
+; Handle request
+;
+
+response:
+    sub rsp, stack_response
+
+; Setup stack
+    mov qword[rsp+fcgx_in], rdi
+    mov qword[rsp+fcgx_out], rsi
+    mov qword[rsp+fcgx_err], rdx
+    mov qword[rsp+fcgx_envp], rcx
 
 ; Get request URI
     mov rsi, qword[rsp+fcgx_envp]
@@ -123,7 +152,7 @@ _start:
     mov rsi, qword[rsp+fcgx_out]
     mov edi, response_foot
     call FCGX_PutS
-    jmp .accept
+    jmp .ret
 
 ; Print home page header
 .home:
@@ -140,21 +169,24 @@ _start:
     mov rsi, qword[rsp+fcgx_out]
     mov edi, response_foot
     call FCGX_PutS
-    jmp .accept
+    jmp .ret
 
 ; Print error page
 .error:
     mov rsi, qword[rsp+fcgx_out]
     mov edi, response_error
     call FCGX_PutS
-    jmp .accept
 
-.quit:
+.ret:
     xor eax, eax
-    add rsp, stack_start
+    add rsp, stack_response
     ret
 
+
+;
 ; Print all permutations
+;
+
 permutations:
     push r15
     push r14
