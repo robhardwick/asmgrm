@@ -292,7 +292,6 @@ response_head:  db `Content-type: text/html\r\n\r\n`, \
                    `<meta charset="utf-8">\n`, \
                    `<meta http-equiv="X-UA-Compatible" content="IE=edge">\n`, \
                    `<title>AsmGrm</title>\n`, \
-                   `<meta name="description" content="">\n`, \
                    `<meta name="viewport" content="width=device-width, initial-scale=1">\n`, \
                    `<style type="text/css">\n`, \
                    `html { font-family: Georgia,Cambria,"Times New Roman",Times,serif; font-size: 2em; }\n`, \
