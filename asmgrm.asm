@@ -7,7 +7,8 @@ extern strlen
 
 ; time.h
 extern clock_gettime
-%define CLOCK_PROCESS_CPUTIME_ID 2
+%define tv_nsec                     8   ; struct timespec -> long int tv_nsec
+%define CLOCK_PROCESS_CPUTIME_ID    2
 
 ; fcgiapp.h
 extern FCGX_Accept
@@ -15,59 +16,52 @@ extern FCGX_GetParam
 extern FCGX_FPrintF
 extern FCGX_PutS
 
-; App constants
-%define MAX_LENGTH      6
+; Constants
+%define MAX_LENGTH  6
 
-; Stack offsets
-%define fcgx_in         0   ; FCGX_Stream *
-%define fcgx_out        8   ; FCGX_Stream *
-%define fcgx_err        16  ; FCGX_Stream *
-%define fcgx_envp       24  ; FCGX_ParamArray
-%define tmspec_start    32  ; struct timespec
-%define tmspec_end      48  ; struct timespec
 
-; Stack sizes
-%define stack_start     32
-%define stack_response  64
-%define stack_perm      24
+;
+; Code
+;
 
-; Struct offsets
-%define tmspec_nsec     8   ; long int tv_nsec (struct timespec)
+section .text
+    global _start
 
 
 ;
 ; Application start
 ;
 
-section .text
-    global _start
+%define start_in    0   ; FCGX_Stream *
+%define start_out   8   ; FCGX_Stream *
+%define start_err   16  ; FCGX_Stream *
+%define start_envp  24  ; FCGX_ParamArray
+%define start_stack 32
 
 _start:
-    sub rsp, stack_start
+    sub rsp, start_stack
 
 ; Start accept loop
 .accept:
-    lea rcx, [rsp+fcgx_envp]
-    lea rdx, [rsp+fcgx_err]
-    lea rsi, [rsp+fcgx_out]
-    lea rdi, [rsp+fcgx_in]
+    lea rcx, [rsp+start_envp]
+    lea rdx, [rsp+start_err]
+    lea rsi, [rsp+start_out]
+    lea rdi, [rsp+start_in]
     call FCGX_Accept
     test eax, eax
     js .quit
 
 ; Ouput response
 .response:
-    mov rcx, qword[rsp+fcgx_envp]
-    mov rdx, qword[rsp+fcgx_err]
-    mov rsi, qword[rsp+fcgx_out]
-    mov rdi, qword[rsp+fcgx_in]
+    mov rsi, qword[rsp+start_envp]
+    mov rdi, qword[rsp+start_out]
     call response
     jmp .accept
 
 ; Exit app
 .quit:
     xor eax, eax
-    add rsp, stack_start
+    add rsp, start_stack
     ret
 
 
@@ -75,17 +69,21 @@ _start:
 ; Handle request
 ;
 
+%define response_out    0   ; FCGX_Stream *
+%define response_envp   8   ; FCGX_ParamArray
+%define response_start  24  ; struct timespec
+%define response_end    40  ; struct timespec
+%define response_stack  56
+
 response:
-    sub rsp, stack_response
+    sub rsp, response_stack
 
 ; Setup stack
-    mov qword[rsp+fcgx_in], rdi
-    mov qword[rsp+fcgx_out], rsi
-    mov qword[rsp+fcgx_err], rdx
-    mov qword[rsp+fcgx_envp], rcx
+    mov qword[rsp+response_out], rdi
+    mov qword[rsp+response_envp], rsi
 
 ; Get request URI
-    mov rsi, qword[rsp+fcgx_envp]
+    mov rsi, qword[rsp+response_envp]
     mov edi, request_uri
     call FCGX_GetParam
     test rax, rax
@@ -117,75 +115,78 @@ response:
 
 ; Print permutations header
 .response:
-    mov rsi, qword[rsp+fcgx_out]
+    mov rsi, qword[rsp+response_out]
     mov edi, response_head
     call FCGX_PutS
 
 ; Get start time
-    lea rsi, [rsp+tmspec_start]
+    lea rsi, [rsp+response_start]
     mov edi, CLOCK_PROCESS_CPUTIME_ID
     call clock_gettime
 
 ; Print permutations
-    mov rdi, qword[rsp+fcgx_out]
+    mov rdi, qword[rsp+response_out]
     mov ecx, ebx
     xor edx, edx
     mov rsi, r14
     call permutations
 
 ; Get end time
-    lea rsi, [rsp+tmspec_end]
+    lea rsi, [rsp+response_end]
     mov	edi, CLOCK_PROCESS_CPUTIME_ID
     call clock_gettime
 
 ; Calculate elapsed time
-    mov rdx, qword[rsp+tmspec_end+tmspec_nsec]
-    sub rdx, qword[rsp+tmspec_start+tmspec_nsec]
+    mov rdx, qword[rsp+response_end+tv_nsec]
+    sub rdx, qword[rsp+response_start+tv_nsec]
 
 ; Print elapsed time
     mov esi, time_fmt
-    mov rdi, qword[rsp+fcgx_out]
+    mov rdi, qword[rsp+response_out]
     xor	eax, eax
     call FCGX_FPrintF
 
 ; Print permutations footer
-    mov rsi, qword[rsp+fcgx_out]
+    mov rsi, qword[rsp+response_out]
     mov edi, response_foot
     call FCGX_PutS
     jmp .ret
 
 ; Print home page header
 .home:
-    mov rsi, qword[rsp+fcgx_out]
+    mov rsi, qword[rsp+response_out]
     mov edi, response_head
     call FCGX_PutS
 
 ; Print home page
-    mov rsi, qword[rsp+fcgx_out]
+    mov rsi, qword[rsp+response_out]
     mov edi, response_home
     call FCGX_PutS
 
 ; Print home page footer
-    mov rsi, qword[rsp+fcgx_out]
+    mov rsi, qword[rsp+response_out]
     mov edi, response_foot
     call FCGX_PutS
     jmp .ret
 
 ; Print error page
 .error:
-    mov rsi, qword[rsp+fcgx_out]
+    mov rsi, qword[rsp+response_out]
     mov edi, response_error
     call FCGX_PutS
 
 .ret:
     xor eax, eax
-    add rsp, stack_response
+    add rsp, response_stack
     ret
 
 
 ;
 ; Print all permutations
 ;
+
+%define perm_out    0   ; FCGX_Stream *
+%define perm_stack  8
 
 permutations:
     push r15
@@ -194,19 +195,19 @@ permutations:
     push r12
     push rbp
     push rbx
-    sub rsp, stack_perm
+    sub rsp, perm_stack
 
 ; Initialise
     mov r14, rsi
     mov r13d, ecx
     mov r12d, edx
     cmp edx, ecx
-    mov qword[rsp+fcgx_out], rdi
+    mov qword[rsp+perm_out], rdi
     je .print
 
 ; Print all permutations for first char
     lea r15d, [r12+1]
-    mov rdi, qword[rsp+fcgx_out]
+    mov rdi, qword[rsp+perm_out]
     mov edx, r15d
     call permutations
     cmp r13d, r15d
@@ -232,7 +233,7 @@ permutations:
     je .next
 
 ; Recurse
-    mov rdi, qword[rsp+fcgx_out]
+    mov rdi, qword[rsp+perm_out]
     mov byte[rbp], dl
     mov ecx, r13d
     mov byte[rbx], al
@@ -253,7 +254,7 @@ permutations:
 
 ; Clean-up and return
 .exit:
-    add rsp, stack_perm
+    add rsp, perm_stack
     pop rbx
     pop rbp
     pop r12
@@ -264,7 +265,7 @@ permutations:
 
 ; Print permutation and return
 .print:
-    add rsp, stack_perm
+    add rsp, perm_stack
     mov rdx, rsi
     xor eax, eax
     pop rbx
