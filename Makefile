@@ -2,8 +2,8 @@ PROG=asmgrm
 SOCK=/tmp/asmgrm.sock
 USER=www-data
 
-SRCS=$(wildcard *.asm)
-OBJS=$(SRCS:%.asm=%.o)
+SRCS=$(wildcard src/*.asm)
+OBJS=$(SRCS:src/%.asm=%.o)
 
 ASM=nasm
 ASMFLAGS=-f elf64
@@ -25,7 +25,7 @@ run: $(PROG)
 $(PROG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-%.o: %.asm
+%.o: src/%.asm
 	$(ASM) $(ASMFLAGS) -o $@ $^
 
 clean:
