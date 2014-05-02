@@ -37,7 +37,6 @@ _start:
     js .quit
 
 ; Ouput response
-.response:
     mov rsi, qword[rsp+start_envp]
     mov rdi, qword[rsp+start_out]
     call asmgrm_response

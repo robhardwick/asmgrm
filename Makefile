@@ -1,19 +1,24 @@
 PROG=asmgrm
+PROG_OBJS=asmgrm.o response.o permutations.o
+PROG_LIBS=-lfcgi -lrt
+
+TEST=test
+TEST_OBJS=test.o permutations.o
+TEST_LIBS=-lrt
+
 SOCK=/tmp/asmgrm.sock
 USER=www-data
 
-SRCS=$(wildcard src/*.asm)
-OBJS=$(SRCS:src/%.asm=%.o)
+SRCS=$(wildcard *.asm)
 
 ASM=nasm
-ASMFLAGS=-f elf64
+ASMFLAGS=-f elf64 -g
 
 LD=ld
 LINKER=/lib64/ld-linux-x86-64.so.2
 LDFLAGS=-s -m elf_x86_64 -dynamic-linker $(LINKER)
-LIBS=-lfcgi -lrt
 
-all: $(PROG)
+all: $(PROG) $(TEST)
 
 run: $(PROG)
 	sudo -u$(USER) killall $(PROG); \
@@ -22,11 +27,14 @@ run: $(PROG)
 	sudo -u$(USER) spawn-fcgi -s $(SOCK) -u $(USER) $(PROG) && \
 	sudo service nginx start
 
-$(PROG): $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+$(PROG): $(PROG_OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(PROG_LIBS)
 
-%.o: src/%.asm
+$(TEST): $(TEST_OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(TEST_LIBS)
+
+%.o: %.asm
 	$(ASM) $(ASMFLAGS) -o $@ $^
 
 clean:
-	rm $(PROG) $(OBJS)
+	rm $(PROG) $(PROG_OBJS) $(TEST) $(TEST_OBJS)
